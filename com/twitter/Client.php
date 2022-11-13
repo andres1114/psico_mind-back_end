@@ -65,7 +65,7 @@ class Client
      * @return UserSearch
      * @throws \Exception
      */
-    public function userSearch(): UserSearch
+        public function userSearch(): UserSearch
     {
         return new UserSearch($this->settings);
     }

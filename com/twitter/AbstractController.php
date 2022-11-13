@@ -54,6 +54,7 @@ abstract class AbstractController
      */
     public function __construct(array $settings = [])
     {
+
         if (!extension_loaded('curl')) {
             throw new Exception('PHP extension CURL is not loaded.');
         }
