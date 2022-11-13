@@ -2,6 +2,9 @@
 
 namespace Noweh\TwitterApi;
 
+//Include GuzzleHttp library
+require "vendor/autoload.php";
+
 use Exception;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ClientException;

@@ -1,6 +1,14 @@
 <?php
 
 namespace TwitterEngine;
+
+foreach (glob(realpath(__DIR__)."\\..\\..\\com\\twitter\\*.php") as $filename) {
+    include $filename;
+}
+foreach (glob(realpath(__DIR__)."\\..\\..\\com\\twitter\\Enum\\*.php") as $filename) {
+    include $filename;
+}
+
 use Noweh\TwitterApi\Client;
 use Noweh\TwitterApi\Enum\Modes;
 
@@ -38,20 +46,21 @@ class TwitterEngine {
 
     private function loadEnvData() {
         try {
-            $jsonFileContents = file_get_contents("../../env.json");
+            $jsonFileContents = file_get_contents(realpath(__DIR__)."\\..\\..\\env.json");
 
             $stdClasJsonObject = json_decode($jsonFileContents, true);
 
-            $this->envData->twitterAppId = $stdClasJsonObject->twitter->appId;
-            $this->envData->twitterApiKey = $stdClasJsonObject->twitter->apiToken;
-            $this->envData->twitterApiKeySecret = $stdClasJsonObject->twitter->apiKeySecret;
-            $this->envData->twitterBearerToken = $stdClasJsonObject->twitter->bearerToken;
+            $this->envData->twitterAppId = $stdClasJsonObject['twitter']['appId'];
+            $this->envData->twitterApiKey = $stdClasJsonObject['twitter']['apiToken'];
+            $this->envData->twitterApiKeySecret = $stdClasJsonObject['twitter']['apiKeySecret'];
+            $this->envData->twitterBearerToken = $stdClasJsonObject['twitter']['bearerToken'];
         } catch (Exception $e) {
             throw new Exception('ERR_CANT_LOAD_ENV_JSON: there was an error trying to load the env json data: '.$e->getMessage());
         }
     }
 
     public function fetchMatchingTwitterAccounts($name) {
-       return $this->twitterClient->findByIdOrUsername($name, Modes::username);
+        $response = $this->twitterClient->userSearch()->findByIdOrUsername($name, Modes::username)->performRequest();
+        return $response;
     }
 }

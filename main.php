@@ -1,9 +1,11 @@
 <?php
 
 include_once "com/db_connection.php";
+include_once "models/classes/twitter_engine.php";
+
 use TwitterEngine\TwitterEngine;
 
-$pdo_sqlite_db = pdoCreateConnection(array('db_type' => "sqlite", 'db_host' => realpath(__DIR__).'\\..\\db\\sentiments.sqlite3', 'db_user' => "root", 'db_pass' => "", 'db_name' => ""));
+//$pdo_sqlite_db = pdoCreateConnection(array('db_type' => "sqlite", 'db_host' => realpath(__DIR__).'\\..\\db\\sentiments.sqlite3', 'db_user' => "root", 'db_pass' => "", 'db_name' => ""));
 $json_response = Array();
 
 ob_start();
