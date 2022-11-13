@@ -81,6 +81,96 @@ try {
 
             $json_response["response"] = $response;
             break;
+        case "showPerformedTweetSentimentAnalysis":
+            $pdo_sqlite_db = pdoCreateConnection(array('db_type' => "sqlite", 'db_host' => realpath(__DIR__).'\\..\\db\\sentiments.sqlite3', 'db_user' => "root", 'db_pass' => "", 'db_name' => ""));
+            $sentimentsPythonScriptName = "main.py";
+            $sentimentsPythonScriptPath = realpath(__DIR__)."\\..\\python\\";
+            $sentimentsPythonScriptArgs = "save_logs";
+
+            $response = new \stdClass();
+
+            $query_args = array(
+                "runvalue" => $json_data->runid
+            );
+            $query = "SELECT * FROM sentiment_queue INNER JOIN run ON sentiment_queue.run_id = run.id WHERE sentiment_queue.estado_id_sentiment_queue = 1 AND run.value = :runvalue";
+            $query_data_1 = pdoExecuteQuery($pdo_sqlite_db, $query, $query_args, "query_03");
+
+            $query_args = array(
+                "runvalue" => $json_data->runid
+            );
+            $query = "SELECT * FROM sentiment_queue INNER JOIN run ON sentiment_queue.run_id = run.id WHERE sentiment_queue.estado_id_sentiment_queue = 2 AND run.value = :runvalue";
+            $query_data_2 = pdoExecuteQuery($pdo_sqlite_db, $query, $query_args, "query_04");
+
+            $response->posts = Array();
+
+            $sentimentPositiveCounter = 0;
+            $sentimentNeutraleCounter = 0;
+            $sentimentNegativeCounter = 0;
+            $sentimentPositiveAverage = 0;
+            $sentimentNeutralAverage = 0;
+            $sentimentNegativeAverage = 0;
+            $sentimentTotal = $query_data_1[1] + $query_data_2[1];
+
+            for ($x = 0; $x < $query_data_2[1]; $x++) {
+                $tempPostObject = new \stdClass();
+                $tempPostObject->postData = new \stdClass();
+                $tempPostObject->postData->content = $query_data_2[0][$x]["texto_evaluacion_sentiment_queue"];
+                $tempPostObject->postData->postSentiment = $query_data_2[0][$x]["puntaje_sentiment_queue"];
+
+                if ($tempPostObject->postData->postSentiment >= 0.3 && $tempPostObject->postData->postSentiment <= 1) {
+                    $sentimentPositiveCounter++;
+                    $tempPostObject->postData->postSentimentEvaluation = "positive";
+                }
+                if ($tempPostObject->postData->postSentiment >= -0.3 && $tempPostObject->postData->postSentiment <= 0.3) {
+                    $sentimentNeutraleCounter++;
+                    $tempPostObject->postData->postSentimentEvaluation = "neutral";
+                }
+                if ($tempPostObject->postData->postSentiment <= -0.3 && $tempPostObject->postData->postSentiment >= -1) {
+                    $sentimentNegativeCounter++;
+                    $tempPostObject->postData->postSentimentEvaluation = "negative";
+                }
+
+                array_push($response->posts, $tempPostObject);
+            }
+
+            if ($sentimentTotal > 0) {
+                $sentimentPositiveAverage = ($sentimentPositiveCounter / $sentimentTotal);
+                $sentimentNeutralAverage = ($sentimentNeutraleCounter / $sentimentTotal);
+                $sentimentNegativeAverage = ($sentimentNegativeCounter / $sentimentTotal);
+            }
+
+            $response->sentimentData = new \stdClass();
+            $response->sentimentData->numberOfPostivePosts = $sentimentPositiveCounter;
+            $response->sentimentData->numberOfNeutralPosts = $sentimentNeutraleCounter;
+            $response->sentimentData->numberOfNegativePosts = $sentimentNegativeCounter;
+            $response->sentimentData->averagePositivePosts = $sentimentPositiveAverage;
+            $response->sentimentData->averageNeutralPosts = $sentimentNeutralAverage;
+            $response->sentimentData->averageNegativePosts = $sentimentNegativeAverage;
+            $response->sentimentData->totalPosts = $sentimentTotal;
+
+            if ($sentimentPositiveAverage > $sentimentNeutralAverage && $sentimentPositiveAverage > $sentimentNegativeAverage) {
+                $response->sentimentData->evaluation = "positive";
+            }
+            if ($sentimentNeutralAverage >= $sentimentPositiveAverage && $sentimentNeutralAverage >= $sentimentNegativeAverage) {
+                $response->sentimentData->evaluation = "neutral";
+            }
+            if ($sentimentNegativeAverage > $sentimentNeutralAverage && $sentimentNegativeAverage > $sentimentPositiveAverage) {
+                $response->sentimentData->evaluation = "negative";
+            }
+
+            $response->runData = new \stdClass();
+            $response->runData->pendingPosts = $query_data_1[1];
+            $response->runData->completedPosts = $query_data_2[1];
+
+            if ($response->runData->pendingPosts > 0) {
+                #$cmd = "python ".$sentimentsPythonScriptPath.$sentimentsPythonScriptName." ".$sentimentsPythonScriptArgs;
+                $cmd = "C:\Users\Andrés\AppData\Local\Programs\Python\Python310\python.exe ".$sentimentsPythonScriptPath.$sentimentsPythonScriptName." ".$sentimentsPythonScriptArgs;
+                pclose(popen($cmd, 'r'));
+                $json_response["cmd"] = $cmd;
+            }
+
+            $json_response["response"] = $response;
+            break;
         default:
             throw new RuntimeException("Caught exception: PHP error, action header '" . $json_data->action . "' not found");
             break;
