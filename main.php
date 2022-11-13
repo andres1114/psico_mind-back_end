@@ -63,10 +63,9 @@ try {
                             $query_args = array(
                                 "rrssid" => 1,
                                 "tweettext" => $response->rrss->twitter->tweets->data[$x]->text,
-                                "statusenumid" => 1,
                                 "runid" => $runDbId
                             );
-                            $query = "INSERT INTO sentiment_queue (id_rrss, fecha_insert_sentiment_queue, fecha_update_sentiment_queue, texto_evaluacion_sentiment_queue, estado_id_sentiment_queue, run_id) VALUES (:rrssid, DateTime('now'),DateTime('now'), :tweettext, :statusenumid, :runid)";
+                            $query = "INSERT INTO sentiment_queue (id_rrss, fecha_insert_sentiment_queue, fecha_update_sentiment_queue, texto_evaluacion_sentiment_queue, estado_id_sentiment_queue, run_id) VALUES (:rrssid, DateTime('now'),DateTime('now'), :tweettext, 1, :runid)";
                             pdoExecuteQuery($pdo_sqlite_db, $query, $query_args, "query_02");
                         }
 
